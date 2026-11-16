@@ -51,8 +51,9 @@ def backgrounds():
 def tiles():
     base = Image.open(os.path.join(IMG, "Ricardito-Solo-Final-MentaV2.png"))
     base = base.crop(base.split()[3].getbbox())
-    base.thumbnail((360, 360), Image.LANCZOS)
-    size = max(base.size) + 16
+    # 240 px alcanza para fichas de hasta ~80 px en pantallas 3x y usa menos memoria de GPU en celulares
+    base.thumbnail((240, 240), Image.LANCZOS)
+    size = max(base.size) + 12
     sq = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     sq.paste(base, ((size - base.width) // 2, (size - base.height) // 2))
     base = sq
@@ -68,9 +69,9 @@ def tiles():
     rgb = base.convert("RGB")
     # sombra horneada en el PNG (más barato que filter: drop-shadow en cada ficha del tablero)
     shadow = Image.new("RGBA", base.size, (0, 0, 0, 0))
-    sh_alpha = alpha.filter(ImageFilter.GaussianBlur(6)).point(lambda x: int(x * 0.45))
+    sh_alpha = alpha.filter(ImageFilter.GaussianBlur(4)).point(lambda x: int(x * 0.45))
     shadow.putalpha(sh_alpha)
-    shadow = ImageChops.offset(shadow, 0, 8)
+    shadow = ImageChops.offset(shadow, 0, 6)
     for name, col in FLAVORS.items():
         tinted = ImageChops.multiply(Image.merge("RGB", (gray, gray, gray)), Image.new("RGB", base.size, col))
         out = Image.composite(tinted, rgb, mask).convert("RGBA")

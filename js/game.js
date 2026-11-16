@@ -710,6 +710,7 @@ modalCard.addEventListener('click', e => {
   else if (act === 'retry') { clearHint(); startLevel(levelIdx); }
   else if (act === 'next') { clearHint(); startLevel(Math.min(levelIdx + 1, LEVELS.length - 1)); }
   else if (act === 'map') { clearHint(); goMap(); }
+  else if (act === 'clear-errors') { try { localStorage.removeItem('ricardito-crush-errors'); } catch (err) {} }
   else if (act === 'close') {}
 });
 
@@ -756,6 +757,37 @@ const soundBtn = $('#btn-sound');
 const syncSound = () => soundBtn.textContent = save.muted ? '🔇' : '🔊';
 soundBtn.addEventListener('click', () => { save.muted = !save.muted; persist(); syncSound(); Sound.init(); Sound.play('click'); });
 syncSound();
+
+/* ------------------------------------------------------------------
+   Registro de errores para diagnóstico: se guarda en el navegador y se
+   muestra tocando 5 veces "Nivel N" en la barra superior.
+------------------------------------------------------------------ */
+function logError(kind, msg) {
+  try {
+    const list = JSON.parse(localStorage.getItem('ricardito-crush-errors') || '[]');
+    list.push(`${new Date().toISOString().slice(0, 19)} N${levelIdx + 1} ${kind}: ${String(msg).slice(0, 300)}`);
+    localStorage.setItem('ricardito-crush-errors', JSON.stringify(list.slice(-15)));
+  } catch (e) {}
+}
+window.addEventListener('error', e => logError('error', (e.message || '') + ' @' + (e.filename || '').split('/').pop() + ':' + e.lineno));
+window.addEventListener('unhandledrejection', e => logError('promise', e.reason && (e.reason.stack || e.reason.message) || e.reason));
+const origWarn = console.warn; console.warn = (...a) => { if (String(a[0]).startsWith('Ricardito')) logError('aviso', a.join(' ')); origWarn(...a); };
+let debugTaps = 0, debugTapTimer = null;
+$('.hud-level').addEventListener('click', () => {
+  debugTaps++; clearTimeout(debugTapTimer); debugTapTimer = setTimeout(() => debugTaps = 0, 1500);
+  if (debugTaps < 5) return; debugTaps = 0;
+  let list = []; try { list = JSON.parse(localStorage.getItem('ricardito-crush-errors') || '[]'); } catch (e) {}
+  const info = `${navigator.userAgent}\n${innerWidth}x${innerHeight} dpr${devicePixelRatio} celda ${cell}px`;
+  openModal(`
+    <h2>Diagnóstico</h2>
+    <p style="font-size:.75rem;opacity:.8">${info.replace(/\n/g, '<br>')}</p>
+    <textarea readonly style="width:100%;height:160px;font-size:.7rem;font-family:monospace;border-radius:10px;padding:8px">${list.length ? list.join('\n') : 'Sin errores registrados'}</textarea>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" data-act="clear-errors">Borrar</button>
+      <button class="btn btn-primary" data-act="close">Cerrar</button>
+    </div>`);
+  modalCard.querySelector('textarea').value = info + '\n\n' + (list.join('\n') || 'Sin errores registrados');
+});
 
 // hooks de desarrollo
 window.__rc = { findMove, trySwap, state: () => ({ score, moves, collected, obleaLeft, busy, over, grid }), setSpecial, setBusy, grid: () => grid, FLAVORS };
