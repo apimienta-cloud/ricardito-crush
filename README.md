@@ -5,6 +5,9 @@ Juego match-3 (estilo Candy Crush) de **Ricardito**, la golosina uruguaya de Cho
 
 Es un sitio estático: HTML, CSS y JavaScript puro, sin dependencias ni build. Funciona en celular y escritorio.
 
+**Jugar online:** <https://apimienta-cloud.github.io/ricardito-crush/>
+(se publica automáticamente con GitHub Pages desde la rama `main`).
+
 ## Cómo probarlo
 
 Abrí `index.html` directamente en el navegador, o levantá un servidor local:
