@@ -302,7 +302,7 @@ boardEl.addEventListener('pointerdown', e => {
   const cl = cellFromEvent(e); if (!cl || !cl.tile) return;
   clearHint();
   drag = { cell: cl, x: e.clientX, y: e.clientY, moved: false };
-  boardEl.setPointerCapture(e.pointerId);
+  try { boardEl.setPointerCapture(e.pointerId); } catch (err) {}
 });
 boardEl.addEventListener('pointermove', e => {
   if (!drag || drag.moved || busy) return;
@@ -653,7 +653,20 @@ function goalHTML() {
   if (g.type === 'oblea') return `<div class="goal-item ${obleaLeft <= 0 ? 'done' : ''}"><span class="oblea-icon"></span><span>${Math.max(0, obleaLeft)}</span></div>`;
   return Object.keys(g.targets).map(f => { const left = Math.max(0, g.targets[f] - (collected[f] || 0)); return `<div class="goal-item ${left === 0 ? 'done' : ''}"><img src="${FLAVORS[f].img}" alt="${FLAVORS[f].name}"><span>${left}</span></div>`; }).join('');
 }
-function setBusy(b) { busy = b; boardEl.classList.toggle('busy', b); }
+let busySince = 0;
+function setBusy(b) { busy = b; busySince = Date.now(); boardEl.classList.toggle('busy', b); }
+
+/* Vigilante: si el tablero queda "ocupado" más de 12 s sin modal abierto, algo se cortó.
+   Repara el tablero y devuelve el control en vez de dejar la partida trabada. */
+document.addEventListener('visibilitychange', () => { busySince = Date.now(); });
+setInterval(async () => {
+  if (!L || !busy || over || !modal.classList.contains('hidden')) return;
+  if (document.visibilityState !== 'visible' || Date.now() - busySince < 12000) return;
+  console.warn('Ricardito Crush: tablero trabado, reparando');
+  busySince = Date.now();
+  try { await settleBoard(); } catch (e) { console.error(e); }
+  if (!over) { setBusy(false); scheduleHint(); }
+}, 1000);
 
 function shout(text) {
   shoutEl.textContent = text; shoutEl.classList.remove('show'); void shoutEl.offsetWidth; shoutEl.classList.add('show');
@@ -745,7 +758,7 @@ soundBtn.addEventListener('click', () => { save.muted = !save.muted; persist(); 
 syncSound();
 
 // hooks de desarrollo
-window.__rc = { findMove, trySwap, state: () => ({ score, moves, collected, obleaLeft, busy, over, grid }), setSpecial, grid: () => grid, FLAVORS };
+window.__rc = { findMove, trySwap, state: () => ({ score, moves, collected, obleaLeft, busy, over, grid }), setSpecial, setBusy, grid: () => grid, FLAVORS };
 // atajo para desarrollo: ?level=N abre ese nivel
 const q = new URLSearchParams(location.search);
 if (q.has('level')) startLevel(Math.max(0, Math.min(LEVELS.length - 1, +q.get('level') - 1)));
