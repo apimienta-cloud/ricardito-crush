@@ -111,6 +111,7 @@ let cols = 0, rows = 0, cell = 64;
 let score = 0, moves = 0, collected = {}, obleaLeft = 0;
 let busy = false, over = false, tileSeq = 0;
 let selected = null, drag = null, hintTimer = null, hinted = [];
+let gen = 0; // generación del tablero: cambia en cada buildBoard para cortar flujos viejos
 
 const SPECIALS = ['striped-h', 'striped-v', 'wrapped', 'bomb'];
 const BADGE = { 'striped-h': '↔', 'striped-v': '↕', 'wrapped': '???', 'bomb': '' };
@@ -124,8 +125,9 @@ function startLevel(i) {
 }
 
 function buildBoard() {
-  cols = L.cols; rows = L.rows;
-  score = 0; moves = L.moves; collected = {}; obleaLeft = 0; over = false; busy = false; selected = null;
+  cols = L.cols; rows = L.rows; gen++;
+  score = 0; moves = L.moves; collected = {}; obleaLeft = 0; over = false; busy = false; selected = null; drag = null;
+  clearHint();
   grid = [];
   boardEl.innerHTML = ''; fxEl.innerHTML = '';
   for (let r = 0; r < rows; r++) {
@@ -340,32 +342,52 @@ function swapTiles(a, b) {
 
 async function trySwap(a, b) {
   if (busy || over || !a.tile || !b.tile) return;
+  const myGen = gen;
   setBusy(true);
-  Sound.play('swap');
-  swapTiles(a, b);
-  await sleep(200);
-  const ta = a.tile, tb = b.tile; // ya intercambiados
-  const combo = comboFor(ta, tb);
-  if (combo) {
-    moves--; updateHUD();
-    await runCombo(combo, a, b);
-    await resolve(1, [a, b]);
-    await endOfMove();
-    return;
-  }
-  const runs = findRuns();
-  if (!runs.length) {
-    Sound.play('bad');
-    ta.el.classList.add('shake'); tb.el.classList.add('shake');
+  try {
+    Sound.play('swap');
     swapTiles(a, b);
-    await sleep(250);
-    ta.el.classList.remove('shake'); tb.el.classList.remove('shake');
-    setBusy(false); scheduleHint();
-    return;
+    await sleep(200);
+    if (myGen !== gen) return;
+    const ta = a.tile, tb = b.tile; // ya intercambiados
+    const combo = comboFor(ta, tb);
+    if (combo) {
+      moves--; updateHUD();
+      await runCombo(combo, a, b);
+      await resolve(1, [a, b]);
+      if (myGen !== gen) return;
+      await endOfMove();
+      return;
+    }
+    const runs = findRuns();
+    if (!runs.length) {
+      Sound.play('bad');
+      ta.el.classList.add('shake'); tb.el.classList.add('shake');
+      swapTiles(a, b);
+      await sleep(250);
+      ta.el.classList.remove('shake'); tb.el.classList.remove('shake');
+      if (myGen !== gen) return;
+      setBusy(false); scheduleHint();
+      return;
+    }
+    moves--; updateHUD();
+    await resolve(0, [a, b]);
+    if (myGen !== gen) return;
+    await endOfMove();
+  } catch (err) {
+    // red de seguridad: nunca dejar el tablero bloqueado
+    console.error('Ricardito Crush:', err);
+    if (myGen === gen && !over) { await settleBoard(); setBusy(false); scheduleHint(); }
   }
-  moves--; updateHUD();
-  await resolve(0, [a, b]);
-  await endOfMove();
+}
+
+/* Repara el tablero si algo quedó inconsistente (celdas vacías o fichas huérfanas) */
+async function settleBoard() {
+  const alive = new Set(); forEachCell(cl => { if (cl.tile) alive.add(cl.tile.el); });
+  boardEl.querySelectorAll('.tile').forEach(el => { if (!alive.has(el)) el.remove(); });
+  forEachCell(cl => { if (cl.tile) setPos(cl.tile, cl.r, cl.c, true); });
+  await applyGravity();
+  await resolve(0);
 }
 
 function comboFor(ta, tb) {
@@ -713,8 +735,10 @@ function goMap() { document.body.style.backgroundImage = `url(assets/bg_light.jp
 $('#btn-play').addEventListener('click', () => { Sound.init(); Sound.play('click'); goMap(); });
 $('#btn-howto').addEventListener('click', () => { Sound.init(); Sound.play('click'); showHowTo(); });
 $('#btn-map-home').addEventListener('click', () => { Sound.play('click'); document.body.style.backgroundImage = ''; showScreen('screen-home'); });
-$('#btn-back').addEventListener('click', () => { Sound.play('click'); clearHint(); closeModal(); goMap(); });
-$('#btn-restart').addEventListener('click', () => { Sound.play('click'); clearHint(); closeModal(); startLevel(levelIdx); });
+// mientras hay una animación en curso (y no hay modal abierto) se ignoran para no cortar el flujo a la mitad
+const midAnimation = () => busy && !over && modal.classList.contains('hidden');
+$('#btn-back').addEventListener('click', () => { if (midAnimation()) return; Sound.play('click'); clearHint(); closeModal(); goMap(); });
+$('#btn-restart').addEventListener('click', () => { if (midAnimation()) return; Sound.play('click'); clearHint(); closeModal(); startLevel(levelIdx); });
 const soundBtn = $('#btn-sound');
 const syncSound = () => soundBtn.textContent = save.muted ? '🔇' : '🔊';
 soundBtn.addEventListener('click', () => { save.muted = !save.muted; persist(); syncSound(); Sound.init(); Sound.play('click'); });

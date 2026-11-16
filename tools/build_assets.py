@@ -66,11 +66,18 @@ def tiles():
     mask = mask.filter(ImageFilter.MinFilter(5)).filter(ImageFilter.MaxFilter(7)).filter(ImageFilter.GaussianBlur(1.2))
     gray = ImageOps.autocontrast(base.convert("L"), cutoff=1).point(lambda x: min(255, int(x * 1.25 + 20)))
     rgb = base.convert("RGB")
+    # sombra horneada en el PNG (más barato que filter: drop-shadow en cada ficha del tablero)
+    shadow = Image.new("RGBA", base.size, (0, 0, 0, 0))
+    sh_alpha = alpha.filter(ImageFilter.GaussianBlur(6)).point(lambda x: int(x * 0.45))
+    shadow.putalpha(sh_alpha)
+    shadow = ImageChops.offset(shadow, 0, 8)
     for name, col in FLAVORS.items():
         tinted = ImageChops.multiply(Image.merge("RGB", (gray, gray, gray)), Image.new("RGB", base.size, col))
         out = Image.composite(tinted, rgb, mask).convert("RGBA")
         out.putalpha(alpha)
-        out.save(os.path.join(OUT, f"tile_{name}.png"))
+        final = shadow.copy()
+        final.alpha_composite(out)
+        final.save(os.path.join(OUT, f"tile_{name}.png"))
 
 
 def rgba_small(src, dst, w):
