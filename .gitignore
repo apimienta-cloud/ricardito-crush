@@ -1,0 +1,8 @@
+# Material original de marca (pesado, no lo usa el juego)
+imagenes/
+# Config local de Claude
+.claude/
+# Sistema
+Thumbs.db
+.DS_Store
+__pycache__/

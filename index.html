@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Ricardito Crush</title>
+<meta name="description" content="Juego match-3 de Ricardito: chocolate por fuera, merengue de corazón.">
+<link rel="icon" href="assets/tile_clasico.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lobster&family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ===== PANTALLA DE INICIO ===== -->
+<section id="screen-home" class="screen active">
+  <div class="floaters" aria-hidden="true"></div>
+  <div class="home-card">
+    <img class="home-logo" src="assets/logo.png" alt="Ricardito">
+    <h1 class="home-title">Crush</h1>
+    <p class="tagline">Chocolate por fuera,<br>merengue de corazón</p>
+    <img class="home-hero" src="assets/tile_clasico.png" alt="">
+    <button class="btn btn-primary btn-big" id="btn-play">¡Jugar!</button>
+    <button class="btn btn-ghost" id="btn-howto">¿Cómo se juega?</button>
+    <img class="uruguay-noma" src="assets/uruguay_noma.png" alt="¡Uruguay nomá!">
+  </div>
+  <footer class="credits">Ricardito es una marca de Chocolates Haas · Industria uruguaya · Sin gluten</footer>
+</section>
+
+<!-- ===== MAPA DE NIVELES ===== -->
+<section id="screen-map" class="screen">
+  <header class="topbar">
+    <button class="btn btn-icon" id="btn-map-home" title="Inicio">⌂</button>
+    <img class="topbar-logo" src="assets/logo.png" alt="Ricardito">
+    <div class="topbar-stars">★ <span id="total-stars">0</span></div>
+  </header>
+  <div class="map-scroll">
+    <div id="worlds"></div>
+  </div>
+</section>
+
+<!-- ===== JUEGO ===== -->
+<section id="screen-game" class="screen">
+  <header class="hud">
+    <div class="hud-left">
+      <button class="btn btn-icon" id="btn-back" title="Volver al mapa">‹</button>
+      <div class="hud-level">Nivel <span id="hud-level">1</span></div>
+    </div>
+    <div class="hud-goal" id="hud-goal"></div>
+    <div class="hud-right">
+      <div class="hud-stat"><span class="hud-label">Movimientos</span><span class="hud-value" id="hud-moves">0</span></div>
+      <div class="hud-stat"><span class="hud-label">Puntos</span><span class="hud-value" id="hud-score">0</span></div>
+    </div>
+  </header>
+  <div class="score-bar"><div class="score-bar-fill" id="score-fill"></div><div class="score-stars"><i></i><i></i><i></i></div></div>
+
+  <main class="board-wrap">
+    <div id="board" class="board"></div>
+    <div id="fx-layer" class="fx-layer"></div>
+    <div id="shout" class="shout"></div>
+  </main>
+
+  <footer class="game-foot">
+    <button class="btn btn-icon" id="btn-sound" title="Sonido">🔊</button>
+    <button class="btn btn-ghost" id="btn-restart">Reiniciar</button>
+    <img class="foot-logo" src="assets/logo.png" alt="">
+  </footer>
+</section>
+
+<!-- ===== MODALES ===== -->
+<div id="modal" class="modal hidden">
+  <div class="modal-card" id="modal-card"></div>
+</div>
+
+<script src="js/levels.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
