@@ -246,6 +246,8 @@ img { -webkit-user-drag: none; user-drag: none; pointer-events: none; }
 .modal-card .modal-img { width: 130px; margin: 4px auto; display: block; filter: drop-shadow(0 8px 8px rgba(0,0,0,.3)); }
 .modal-card .modal-img.sad { filter: grayscale(.6) drop-shadow(0 8px 8px rgba(0,0,0,.3)); }
 .modal-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+.modal-card .btn-ghost { background: linear-gradient(180deg, var(--blue-light), var(--blue)); color: #fff; backdrop-filter: none; box-shadow: 0 4px 0 var(--blue-dark); }
+.modal-card .btn-ghost:active { box-shadow: 0 1px 0 var(--blue-dark); }
 .modal-card .tip { background: #fff3cf; border: 2px dashed var(--gold); border-radius: 12px; padding: 8px 10px; font-size: .9rem; margin-top: 10px; }
 .modal-card .goal-preview { display: flex; justify-content: center; gap: 10px; margin: 8px 0; flex-wrap: wrap; }
 .modal-card .goal-preview .goal-item { background: #e2eefb; color: var(--choco-dark); }
